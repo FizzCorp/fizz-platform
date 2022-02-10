@@ -1,0 +1,5 @@
+type: string
+description: Sort order of resulted query.
+enum:
+  - asc
+  - desc

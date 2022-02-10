@@ -1,0 +1,9 @@
+description: The platform of the user.
+type: string
+enum:
+  - ios
+  - android
+  - windows
+  - windows_phone
+  - mac_osx
+  - web_player

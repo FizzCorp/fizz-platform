@@ -1,0 +1,35 @@
+required:
+  - id
+  - from
+  - to
+  - created
+properties:
+  id:
+    type: number
+    format: int64
+    description: Uniquely identifies the message in the channel.
+  from:
+    $ref: './common/UserId.yaml'
+  to:
+    type: string
+    description: The recepient of the message (the channel id).
+  nick:
+    type: string
+    maxLength: 64
+    description: Human friendly name of the sender.
+  body:
+    type: string
+    maxLength: 1024
+    description: The message body.
+  data:
+    type: string
+    maxLength: 1024
+    description: Any user specified data that can be attached with the message.
+  translations:
+    type: object
+    additionalProperties:
+      type: string
+  created:
+    type: number
+    format: int64
+    description: Unix timestamp (in milliseconds) of the message's creation time.

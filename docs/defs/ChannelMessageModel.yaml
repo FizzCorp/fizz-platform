@@ -1,0 +1,30 @@
+type: object
+properties:
+  nick:
+    type: string
+    maxLength: 64
+    description: Human friendly name of the sender.
+  body:
+    type: string
+    maxLength: 1024
+    description: The message body.
+  data:
+    type: string
+    maxLength: 1024
+    description: Any user specified data that can be attached with the message.
+  translate:
+    type: boolean
+    default: false
+    description: The message body will be translated if set to true.
+  filter:
+    type: boolean
+    default: true
+    description: The message body will be moderated if set to true.
+  persist:
+    type: boolean
+    default: true
+    description: Persist the message in the channel's message journal. All messages are persisted by default. Set to false to prevent the system from persisting the message.
+  locale:
+    allOf:
+      - $ref: './common/LanguageCode.yaml'
+    description: The locale of the field body. If this key is not provided, then the system will auto-detect the locale.

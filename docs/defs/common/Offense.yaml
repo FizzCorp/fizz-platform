@@ -1,0 +1,10 @@
+type: string
+description: Type of offense.
+enum:
+  - Spam
+  - Toxic
+  - Harassment
+  - Hate Speech
+  - Sexually Explicit
+  - Offensive Name
+  - Other

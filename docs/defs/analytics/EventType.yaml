@@ -1,0 +1,7 @@
+description: Type of the event. Specify the appropriate value based on type.
+type: string
+enum:
+  - session_started
+  - session_ended
+  - text_msg_sent
+  - product_purchased

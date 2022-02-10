@@ -1,0 +1,263 @@
+paths:
+  QueryUser:
+    get:
+      operationId: QueryUser
+      tags:
+        - User
+      summary: Query User
+      description: Query the user details.
+      parameters:
+        - name: userId
+          description: The User's Id.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './defs/user/User.yaml'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+    post:
+      operationId: UpdateUser
+      tags:
+        - User
+      summary: Update User
+      description: Updates profile of a user.
+      parameters:
+        - name: userId
+          description: The User's Id.
+          in: path
+          required: true
+          schema:
+            type: string  
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  UserSubscribers:
+    post:
+      operationId: AddUserSubscriber
+      tags:
+        - User
+      summary: Subscribe to User's updates.
+      description: Subscribe to User's updates.
+      parameters:
+        - name: userId
+          description: The User's Id.
+          in: path
+          required: true
+          schema:
+            type: string   
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+      
+    delete:
+      operationId: RemoveUserSubscriber
+      tags:
+        - User
+      summary: Unsubscribe User's updates.
+      description: Unsubscribe from a user's updates.
+      parameters:
+        - name: userId
+          description: The User's Id.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  UserDevices:
+    post:
+      operationId: SetDeviceToken
+      tags:
+        - User
+      summary: Set user device token
+      description: |
+        Set token that will be used for sending push notifications to the user.
+      parameters:
+        - name: userId
+          description: The User's Id.
+          in: path
+          required: true
+          schema:
+            type: string  
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/SetUserDeviceRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  UserDevice:
+    delete:
+      operationId: ClearDeviceToken
+      tags:
+        - User
+      summary: Clear a user's device token
+      description: |
+        Clear token that was set for the specified platform (for sending push notifications).
+      parameters:
+        - name: userId
+          description: The User's Id.
+          in: path
+          required: true
+          schema:
+            type: string  
+        - name: platform
+          description: The push platform for with the token is being specified.
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - fcm
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+components:
+  schemas:
+    UpdateUserRequest:
+      type: object
+      properties:
+        nick:
+          type: string
+          maxLength: 64
+          description: Nick of the user.
+        status_message:
+          type: string
+          maxLength: 128
+          description: Status message of the user.
+        profile_url:
+          type: string
+          description: Profile url of the user.
+    
+    SetUserDeviceRequest:
+      type: object
+      properties:
+        platform:
+          type: string
+          description: The push platform for which the token is being specified.
+          enum:
+            - fcm
+        token:
+          type: string
+          description: Token obtained for the specified push platform.

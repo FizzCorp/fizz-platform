@@ -1,0 +1,10 @@
+required:
+  - id
+  - size
+properties:
+  id:
+    type: string
+    description: Uniquely identifies the topic in channel.
+  size:
+    type: integer
+    description: The number of subscribers in channel topic.

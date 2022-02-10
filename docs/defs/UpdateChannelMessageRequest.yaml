@@ -1,0 +1,25 @@
+type: object
+properties:
+  nick:
+    type: string
+    maxLength: 64
+    description: Human friendly name of the sender.
+  body:
+    type: string
+    maxLength: 1024
+    description: The message body.
+  data:
+    type: string
+    maxLength: 1024
+    description: Any user specified data that can be attached with the message.
+  translate:
+    type: boolean
+    description: The message body will be translated if set to true.
+  filter:
+    type: boolean
+    default: true
+    description: The message body will be moderated if set to true.
+  locale:
+    allOf:
+      - $ref: './common/LanguageCode.yaml'
+    description: The locale of the field body. If this key is not provided, then the system will auto-detect the locale.

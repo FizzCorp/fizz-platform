@@ -1,0 +1,9 @@
+node_modules/
+dump.rdb
+.idea
+.vscode
+.DS_Store
+*.pem
+*.zip
+*.log
+*.ser

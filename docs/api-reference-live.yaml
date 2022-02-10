@@ -1,0 +1,852 @@
+openapi: 3.0.9
+info:
+  title: Fizz Documentation
+  x-logo:
+    url: "images/fizz.png"
+  description: |
+    # Introduction
+    Fizz is a platform aimed at improving user acquisition, retention and conversion. Fizz provides different services that work together to achieve these goals. However, it is also possible to opt in the services individually to add value to your products (depending on your needs). Following is a brief description of the Fizz services:
+
+    ### Chat
+    Chat is a multilingual chat solution for powering global audiences in games. The Chat service is segregated into a RESTful API that allows performing different operations on the service (e.g. publish a message) and a messaging system that implements the MQTT protocol. It is possible to perform operations on the service without integrating the messaging system. This allows systems to perform operations (such as send custom messages based on game events in a channel) without needing to integrate the messaging (MQTT) system.
+
+    ### Analytics
+    Provides insights into user behavior by running analyses on application events. These events are collected via the ingestion API. The platform specializes in allowing user chat data to be mined for insights by cross referencing user behavioral data with the chat logs.
+    
+    ### Cloud Messaging
+    Creates channels of communication that allows messages to be sent to different segments of users, e.g. push in-app messages to all whales or to user in their first week of usage, etc.
+
+    ### Translate
+    Translate text in 36 languages in real-time with slang support.
+
+    ### Config
+    Using segmented application configurations engineer custom experiences for users. For instance run different tutorials based on user age, perform A/B tests, etc
+
+    # Glossary
+    ### Application
+    A tenant of the system. Each application's state is segregated from the others. An application can perform operations on resources owned by itself only.
+
+    ### User
+    All operations in the Fizz services are performed by users. A user is anyone (anything) that uses the Fizz system. Users can include application users, bots, systems, etc. Please note that Fizz does not ensure that users are uniquely identified, it is the responsibility of the application system to assign unique identifiers to users.
+    
+    ### Subscriber
+    An entity that subscribes to messages published on a topic (or channel).
+    
+    ### Topic
+    Fizz implements a topic-based publish-subscribe system that allows entities (publishers) to send messages to subscribers in a reliable way.
+    
+    ### Channel
+    Establishes a channel of communication (or "chat-room") between different entities. Entities can publish messages to a channel, which are then delivered to all subscribing entities. Channels persist all messages to a message journal, which allows offline entities to read through the message history. A channel can also comprise of multiple topics for load-balancing large channels.
+
+    ### Group
+    Creates a group of users with chat channels. Application admins can create a group by adding the users or by sending invites. Once a user is part of a group, he can send messages in group channels.
+    
+    ### Event
+    A thing of interest that takes place in a system. Fizz allows events to be ingested into the system. The analytics service runs various kinds of analyses on the ingested data to extract valuable insights.
+
+    # Security
+    ### Resource Owner
+    All resources in the Fizz platform are owned by an application. Each application is authorized to access its own resources only and cross application resource sharing is not allowed.
+    
+    ### Auth Grants
+    Fizz can only authenticate and authorize applications. Each application is supplied an Id and a secret which can be used to authorize the application. Since the platform cannot authenticate or authorize users, the application must grant users rights to its resources (scoped to that user).
+
+    ### User Sessions
+    To grant a user access to resources (owned by the application) a user session must be generated. To generate a user session the application must authenticate itself. 
+    
+    ### Application Authentication
+    Authentication is performed by generating a signature of the uri, method and request body using the application secret. The secret is used to compute an HMAC-SHA256 (base64 encoded) signature of the uri, method and SHA256 hashed body of the request.
+    It is expected that the application id will be passed in x-fizz-app-id header and the calculated signature is supplied in the Authorization header with the keyword HMAC-SHA256.
+
+    #### NOTE: Old Authentication method of digest calculation using application secret will still work.
+
+    ```
+        // uri: Fizz Resource URL
+        // method: HTTP Method, and it should be POST, GET or DELETE only
+        // json: Request json body
+        // secretKey: Fizz Application Secret
+        private string CalculateSignature(string uri, string method, string body, string secretKey) 
+        {
+            // compute the request body's SHA256 hash. use empty string if the request has no body
+            var bodyHash = ComputeSHA256(body);
+            // extract the normalized resource path
+            var path = NormalizedPath(uri);
+            // create the string to sign using: METHOD + "\n" + RESOURCE PATH + "\n" + BODY HASH
+            var stringToSign = method + "\n" + path + "\n" + bodyHash;
+            // compute the signature using the app secret
+            return ComputeHmacSHA256(stringToSign, secretKey);
+        }
+
+        // Extracts the normalized path (https://tools.ietf.org/html/rfc3986#section-3.3) from the URI. 
+        // In summary a normalized resource path (for an absolute URI):
+        //   1. Starts with a "/"
+        //   2. Unescapes unreserved characters
+        //   3. Removes redundant and dot segments
+        private string NormalizedPath(string uriString)
+        {
+            Uri uri = new Uri(uriString);
+            return Regex.Replace(uri.AbsolutePath, "/+", "/"); 
+        }
+
+        private string ComputeSHA256(string payload) 
+        {
+            var encoding = new UTF8Encoding();
+            var buffer = encoding.GetBytes(payload);
+
+            using (SHA256 mySHA256 = SHA256.Create())
+            {
+                var hash = mySHA256.ComputeHash(buffer);
+                return Convert.ToBase64String(hash);
+            }
+        }
+
+        private string ComputeHmacSHA256(string payload, string secretKey)
+        {
+            var encoding = new UTF8Encoding();
+            var body = encoding.GetBytes(payload);
+            var key = encoding.GetBytes(secretKey);
+
+            using (var encoder = new HMACSHA256(key))
+            {
+                byte[] hashmessage = encoder.ComputeHash(body);
+                return Convert.ToBase64String(hashmessage);
+            }
+        }
+
+        var signature = CalculateSignature(uri, method, requestBody, secretKey);
+
+        //Set authorization header to "HMAC-SHA256 signature" and 
+        //x-fizz-app-id header to Fizz Application Id when sending request
+    ```
+    
+    ### Client Authentication Integration
+    A signature based authentication mechanism allows user sessions to be generated from the application client as well. A signature based authentication protects against a MITM attack (by not sending the credentials over the wire). It is however recommended that the user sessions are generated from the application server for higher security. Please keep in mind that the Id and secret gives access to all resources owned by the application and cannot be changed once generated.
+
+    # User Moderation
+    The chat service allows the role of administrator to be assigned to users. This is an application scoped role and assigned rights to users to perform (almost) any operation on any resource in the service. It is therefore not recommended to assign application end users the role of administrators.
+    
+    The following user moderation operations are available to administrators:
+
+    #### Message Deletion
+    Delete messages sent by users (excluding administrators) in a channel. This allows administrators to moderate the content published by users.
+
+    #### Muting
+    Muted users have read-only access to the channel (they can only read messages in a channel).
+
+    #### Banning
+    Banned users are prevented from performing any operation on a channel.
+    
+    # Messaging System Integration
+    ### Real-Time Events
+    The Fizz platform includes a messaging service that supports sending real-time messages between internet enabled machines (devices, services, etc). The Chat service uses the messaging system to push real-time events to the end users. These include events such as chat message published, chat message modified and chat message deleted. 
+    
+    ### MQTT
+    The messaging system implements the MQTT protocol. MQTT is a lightweight publish-subscribe message transport. The pubsub model allows message publishers to communicate with message subscribers via topics. This allows the two to be decoupled from on another. 
+    
+    Please see http://mqtt.org/ for more details. 
+    
+    Being an open standard MQTT supports a wide variety of platforms. For a list of MQTT clients please see the https://github.com/mqtt/mqtt.github.io/wiki/libraries.
+
+    The Fizz MQTT broker can be accessed at mqtt.fizz.io (please note that TLS is supported).
+
+    ### MQTT Standard Support
+    Currently Chat does not support all the MQTT operations. All topic subscription and message publishing is done using the REST API. However in the future more of the MQTT protocol will be supported.
+
+    ### User Sessions
+    On connection a session is created for a user. A user session stores all topic subscriptions and all unread messages. On session expiration the topic subscriptions and unread messages are removed as well. When connecting with the messaging system the 'Session Present' flag is set to true if a session is being resumed or false if a new session is being created.
+
+    ### At least Once Delivery
+    The messaging system supports the QoS1 quality level for ensuring alteast once delivery. However this quality level is ensured as long as the user has an existing session on the system. This prevents message loss for a user that has intermittent access to the internet.
+
+    ### State Synchronization
+    As mentioned, a user session in the messaging system stores both the topic subscriptions and the unread messages. If a new user session is started the application client must synchronize the state with the system. This includes the following:
+      1. Subscribe (or resubscribe) to all channels the user is interested in.
+      2. Fetch the last page of messages from the channel message journal.
+
+    Therefore when connecting with the system the client must check the value of the 'Session Present' flag and perform the following:
+    ```
+      void OnConnected(bool sessionPresent) 
+      {
+          if (sessionPresent) 
+          {
+              return; // do nothing since all missed messages will be received
+          }
+          
+          foreach (string channel in channelList) 
+          {
+              subscribeToChannel(channel); // subscribe to channel
+              fetchMessages(channel); // store last page of messages in channel
+          }
+      }
+    ```
+
+    ### Topic Messages
+    All message payloads published on the MQTT topics use a JSON payload with the following schema:
+
+    ```
+    {
+      "id":   "string",   // Uniquely identifies the messages.
+      "type": "string",   // Determines the type of the message.
+      "from": "string",   // The id of the sender.
+      "data": "string",   // The message payload.   
+      "created": "string" // Time of message creation in Unix timestamp.
+    }
+    ```
+
+    The following code snippet demonstrates a topic message declaration in C#.
+    ```
+    public class FizzTopicMessage
+    {
+        public static readonly string KEY_ID = "id";
+        public static readonly string KEY_TYPE = "type";
+        public static readonly string KEY_FROM = "from";
+        public static readonly string KEY_DATA = "data";
+        public static readonly string KEY_CREATED = "created";
+
+        public FizzTopicMessage(string json)
+        {
+            JSONNode data = JSONNode.Parse(json);
+            Id = (long)data[KEY_ID].AsDouble;
+            Type = data[KEY_TYPE];
+            From = data[KEY_FROM];
+            Data = data[KEY_DATA];
+            Created = (long)data[KEY_CREATED].AsDouble;
+        }
+
+        public long Id { get; private set; }
+        public String Type { get; private set; }
+        public String From { get; private set; }
+        public String Data { get; private set; }
+        public long Created { get; private set; }
+    }
+    ```
+
+    ### Channel Messages
+    Each channel in the Chat service comprises of at least one topic (multiple topic can be created when load balancing the traffic on a channel). Operations performed on channels (e.g. publishing, editing or deleting a message) results in event published on the channel's topic. All events are encoded using topic messages (described above). The channel message payload is encoded as a JSON string and stored in the topic message's data property.
+
+    The following demonstrates parsing channel message events published on topic messages.
+    ```
+      private void OnMessage(int connId, object sender, MqttApplicationMessageReceivedEventArgs args)
+      {
+          try
+          {
+              string payload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload);
+              FizzTopicMessage message = new FizzTopicMessage(payload);
+
+              switch(message.Type) {
+                  case "CMSGP": // Channel Message Published
+                      if (OnMessagePublished != null)
+                      {
+                          OnMessagePublished.Invoke(AdaptTo(message));
+                      }
+                      break;
+                  case "CMSGU": // Channel Message Updated
+                      if (OnMessageUpdated != null)
+                      {
+                          OnMessageUpdated.Invoke(AdaptTo(message));
+                      }
+                      break;
+                  case "CMSGD": // Channel Message Deleted
+                      if (OnMessageDeleted != null)
+                      {
+                          OnMessageDeleted.Invoke(AdaptTo(message));
+                      }
+                      break;
+                  default:
+                      FizzLogger.W("unrecognized packet received: " + payload);
+                      break;
+              }
+          }
+          catch
+          {
+              FizzLogger.W("received invalid message: " + args.ApplicationMessage.Payload);
+          }
+      }
+
+      private FizzChannelMessage AdaptTo(FizzTopicMessage message) 
+      {
+          JSONNode payload = JSONNode.Parse(message.Data);
+          JSONClass translationData = payload["translations"].AsObject;
+          IDictionary<string, string> translations = null;
+
+          if (translationData != null)
+          {
+              translations = new Dictionary<string, string>();
+              foreach (string key in translationData.Keys)
+              {
+                  translations.Add(key, translationData[key]);
+              }
+          }
+
+          return new FizzChannelMessage(
+              message.Id,
+              message.From,
+              payload["nick"],
+              payload["to"],
+              payload["body"],
+              payload["data"],
+              translations,
+              message.Created
+          );
+      }
+    }
+    ```
+
+    # Custom Messaging
+    Fizz allows the messaging system to be extended by allowing applications to associate custom data with messages. This allows applications to implement features such as donations, guild notifications, location sharing, polls, etc
+
+    Each channel message contains a 'data' field. This field is owned by the application and can be used to store any metadata about the message. For instance the data field can be used to add custom message types using the following (stringified) JSON payload:
+
+    ```
+    {
+      "type": "troop_donation",
+      "requester_id": "userA",
+      "requested": 40,
+      "donated": 0
+    }
+    ```
+    #### Donations
+    Some games implement a donations feature which allows users to request donations (cards, troops, etc) from other users through the chat. On receiving a message in the channel requesting donations, other users can donate via the chat UI to the requester.
+
+    Normally this feature is implemented using the follwoing scheme:
+
+    ![](https://s3.amazonaws.com/docs.fizz.io/images/01-custom-donations.jpg)
+
+    Following are the details of the steps involved:
+    1. Client A sends a donations request to the game server (via a game server API).
+    2. After validations (whether A can request donations or not), the game server pubslishes a donations request message in the appropriate channel (the sender can be a user created specifically for this purpose and used only by the game server).
+    3. Fizz pubslishes the messages to all clients in the specified channel (Client A and Client B in this scenario).
+    4. On receiving the message, Client B decides to donate to Client A via the chat UI. This in turn sends a request to the Game Server to donate to Client A.
+    5. After validations (whether B can donate to A or not), the Game Server updates the donations request message by updating the number of donations (1 in this case).
+    6. Fizz pushes the message update in the channel which updates the donation count for each client in the channel.
+
+    Please note that the donations message can contain any data needed to implement this feature. As an example, something similar the JSON payload above can be used to implement this feature.
+
+    # Custom Content Moderation
+    Allow companies to update their own custom profanity lists on Azure.
+    Please follow the instructions below as shown in the video:
+
+    <iframe width="100%" height="500" src="https://www.youtube.com/embed/FSx381gHtpM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+    #### Create and Publish a Google Spreadsheet
+    1. Please create a sample spreadsheet in the following format [Fizz Bad Words](https://docs.google.com/spreadsheets/d/1mRC_N-AL4KgcrhILU8MH3F_r9MqeetNHE78onRPPpuk/edit?usp=sharing).
+    2. The sheet name should be **fizz_cm_custom_list** and all the profane words should be listed under the column **fizz_bad_words**.
+    3. Please follow the steps mentioned here [Publish Google Docs](https://support.google.com/docs/answer/183965?co=GENIE.Platform%3DDesktop&hl=en) and choose **fizz_cm_custom_list** as a publishing option.
+    4. Once you have made it public, it should generate a URL. Close the dialogue of publish settings and check the URL of the google sheet which is in the following format:
+    [https://docs.google.com/spreadsheets/d/**spread_sheet_id**/edit#gid=0](#section/Custom-Content-Moderation)
+
+    #### Import Postman Collection for Azure Content Moderation
+    1. Open [postman client](https://www.getpostman.com/downloads/) and make sure its updated to the latest version.
+    2. Import the collection from [Azure Content Moderation](https://www.getpostman.com/collections/48881c82bd5702b55291). You should see the following requests in your collection:
+    
+    <div style="text-align:center"><img src="images/03-azure-content-moderation.png" height="75%" width="50%"></div>
+
+    3. Once you have Imported the postman collection create a new postman environment by the name **Azure**.
+    4. In the Azure environment add following environment variables: \
+      4.1. **region**: region for the azure server e-g; eastus. \
+      4.2. **spread_sheet_id**: the id you got in the url after publishing your google sheet. \
+      4.3. **subscription_key**: the OCIM subscription key for your Azure Account. \
+      4.4. **list_id**: just add this with empty value. Will be needed for future steps.
+
+    #### Create an Azure Custom Profanity List
+    1. Please execute the **createList** request from the Postman Collection.
+    2. In the response you will get a listId. Fill this listId in **list_id** environment variable (**Section**: Import Postman Collection **Step**: 4.4) to update it later.
+    3. Execute **getAllList** request to see all your custom listIds in case you forgot the id or have not saved it in environment variables.
+
+    #### Update a Custom List
+    1. Please fill in the **list_id** environment variable of postman collection (**Section**: Import Postman Collection **Step**: 4.4) for the list you want to update.
+    2. Please execute the **readBadWords** request. This reads all the Profane words mentioned in your google spreadsheet (**Section**: Create and Publish a Google Spreadsheet **Step**: 3)
+    3. Please execute the **updateList** postman request. This will update the Azure Profanity List.
+    4. Please execute the **refreshList** postman request. This will clear cached data and your latest changes will be reflected for sure.
+    5. **YAY!** Your custom list is updated. You can execute the **getAllTerms** postman request to verify the changes.
+
+    # Load Balancing
+    The Fizz chat platform allows an unlimited number of users to be subscribed to the same channel. However, internally a load balancing component creates and distributes the subscribers between different topics for the same channel. This allows Fizz to keep the conversation running at a reasonable pace.
+    
+    Each channel contains a 'default topic' which is created by default for each channel. All operations performed on the channel are applied to the default topic.
+
+    ![](https://s3.amazonaws.com/docs.fizz.io/images/channel_lb_default.jpg)
+
+    As more users subscribe to the same channel, the load balancer creates additional topics and distributes the subscribers (equally) amongst these topics. 
+
+    ![](https://s3.amazonaws.com/docs.fizz.io/images/channel_lb_sharded.jpg)
+    
+    <blockquote>
+      <font color="grey">
+      Note: Some operations are currently enabled for the default topic only. These include message edit, delete, etc. Please contact devsupport@fizz.io if you have a use case that requires these operations to be supported for all topics.
+      </font>
+    </blockquote>
+
+    # User Presence
+    The Fizz chat platform offers users presence awareness to your application. The user's presence status can be fetched at any time or can be subscribed for live updates. With User subscription, your app gets notified when users come online and go offline.
+    ```
+    public interface IFizzUsers 
+    {
+        void GetUser(string userId, Action<IFizzUser, FizzException> callback);
+        void Subscribe(string userId, Action<FizzException> callback);
+        void Unsubscribe(string userId, Action<FizzException> callback);
+    }
+    ```
+
+    # Unread Messages
+    The Fizz chat platform offers the users to maintain their last read state in a group. Users can now modify their groups by providing the last read message-id which is re-accessible when users fetch the groups.
+    ```
+    public interface IFizzUsers 
+    {
+        void UpdateGroup(string userId, string groupId, FizzGroupMemberState? state, long? lastReadMessageId, Action<FizzException> callback);
+    }
+    
+    public interface IFizzUserGroup 
+    {
+        string GroupId { get; }
+        FizzGroupMemberRole Role { get; }
+        FizzGroupMemberState State { get; }
+        long? LastReadMessageId { get; }
+        long Created { get; }
+    }
+    ```
+
+  version: 1.0.0
+  termsOfService: ''
+  contact:
+    email: devsupport@fizz.io
+
+x-tagGroups:
+  - name: API Reference
+    tags:
+      - Auth
+      - Ingestion
+      - User
+      - Channel
+      - Topic
+      - Group
+      - Moderation
+      - Translate
+      - Configurations
+      - Preferences
+      - GDPR
+      
+
+servers:
+- url: https://api.fizz.io/v1
+
+tags:
+  - name: Auth
+    description: Manage application user authentication and authorization.
+  - name: Ingestion
+    description: Submit application events for ingestion.
+  - name: User
+    description: Retreive and update information about the users.
+  - name: Channel
+    description: Implement multi-lingual chat in your application.
+  - name: Topic
+    description: Provides access to a channel's topics.
+  - name: Group
+    description: Create groups of users with chat channels.
+  - name: Moderation
+    description: Modertate the chat content.
+  - name: Translate
+    description: Translate text at runtime for multilingual applications.
+  - name: Configurations
+    description: Manage configurations.
+  - name: Preferences
+    description: Manage preferences.
+  - name: GDPR
+    description: Create and manange GDPR requests of the users.
+    
+scheme:
+  - https
+    
+paths:
+  '/sessions':
+    $ref: './api-auth.yaml#/paths/sessionAuth'
+
+  '/sessions/{userId}':
+    $ref: './api-auth.yaml#/paths/updateSessionAuth'
+  
+  '/admins':
+    $ref: './api-auth.yaml#/paths/adminManagement'
+
+  '/mutes':
+    $ref: './api-auth.yaml#/paths/AppMutes'
+
+  '/events':
+    post:
+      tags:
+        - Ingestion
+      summary: Ingest application events
+      description: Submit application events to track user behavior and generate insights.
+      operationId: SubmitEvents
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              description: An array of events to ingest.
+              $ref: '#/components/schemas/SubmitEventsRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+      
+  '/channels/{channelId}/messages':
+    $ref: './api-chat.yaml#/paths/ChannelMessages'
+
+  '/channels/{channelId}/messages/{messageId}':
+    $ref: './api-chat.yaml#/paths/ChannelMessageById'
+
+  '/channels/{channelId}/subscribers':
+    $ref: './api-chat.yaml#/paths/ChannelSubscribers'
+
+  '/channels/{channelId}/bans':
+    $ref: './api-chat.yaml#/paths/ChannelBans'
+
+  '/channels/{channelId}/bans/{bannedUserId}':
+    $ref: './api-chat.yaml#/paths/ChannelBanById'
+
+  '/channels/{channelId}/mutes':
+    $ref: './api-chat.yaml#/paths/ChannelMutes'
+
+  '/channels/{channelId}/mutes/{mutedUserId}':
+    $ref: './api-chat.yaml#/paths/ChannelMuteById'
+
+  '/channels/{channelId}/topics':
+    $ref: './api-chat.yaml#/paths/ChannelTopics'
+
+  '/channels/{channelId}/topics/{topicId}/messages':
+    $ref: './api-chat.yaml#/paths/ChannelTopicMessages'
+  
+  '/reports':
+    $ref: './api-chat-moderation.yaml#/paths/ReportMessage'
+  
+  '/translations':
+    $ref: './api-translate.yaml#/paths/TranslateText'
+
+  '/moderatedTexts':
+    $ref: './api-text-moderation.yaml#/paths/TextModeration'
+
+  '/configs/contentModerators':
+    post:
+      tags:
+        - Configurations
+      summary: Save content provider configuration
+      description: Submit content provider configuration to filter out profane words to sanitize text.
+      operationId: SaveContentProviderConfig
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/ProviderConfig'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+    get:
+      tags:
+        - Configurations
+      summary: Query content provider configuration
+      description: Query content provider configuration.
+      operationId: FetchContentProviderConfig
+      responses:
+        '200':
+          description: The content provider configuration.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderConfigResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+    delete:
+      tags:
+        - Configurations
+      summary: Remove content provider configuration
+      description: Remove content provider configuration.
+      operationId: RemoveContentProviderConfig
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+  '/preferences':
+    $ref: './api-application-config.yaml#/paths/Preferences'
+  
+  '/users/{userId}':
+    $ref: './api-user.yaml#/paths/QueryUser'
+
+  '/users/{userId}/subscribers':
+    $ref: './api-user.yaml#/paths/UserSubscribers'
+
+  '/users/{userId}/groups':
+    $ref: './api-user-group.yaml#/paths/UserGroups'
+
+  '/users/{userId}/groups/{groupId}':
+    $ref: './api-user-group.yaml#/paths/UserGroup'
+
+  '/groups':
+    $ref: './api-group.yaml#/paths/Groups'
+
+  '/groups/{groupId}':
+    $ref: './api-group.yaml#/paths/Group'
+
+  '/groups/{groupId}/members':
+    $ref: './api-group.yaml#/paths/GroupMembers'
+
+  '/groups/{groupId}/members/{memberId}':
+    $ref: './api-group.yaml#/paths/GroupMember'
+
+  '/groups/{groupId}/mutes':
+    $ref: './api-group.yaml#/paths/MuteGroupMember'
+
+  '/groups/{groupId}/mutes/{memberId}':
+    $ref: './api-group.yaml#/paths/UnMuteGroupMember'
+
+  '/groups/{groupId}/messages':
+    $ref: './api-group.yaml#/paths/GroupMessages'
+
+  '/privacy/gdpr':
+    $ref: './api-gdpr.yaml#/paths/GDPRRequests'
+    
+  '/privacy/gdpr/{requestId}':
+    $ref: './api-gdpr.yaml#/paths/GDPRRequest'
+
+components:
+  securitySchemes:
+    digest:
+      type: apiKey
+      in: header
+      name: "Authorization"
+      description: "HMAC SHA256 digest of the request body. Please see the introduction for more details."
+
+    session_token:
+      type: apiKey
+      in: header
+      name: "Session-Token"
+      description: "Session token generated using the application credentials."
+
+  schemas:        
+    AbstractEvent:
+      type: object
+      description: Abstract base model for all events. Do not use this model directly.
+      required:
+        - user_id
+        - type
+        - time
+        - ver
+        - session_id
+      discriminator: type
+      properties:
+        user_id:
+          type: string
+          maxLength: 64
+          description: Uniquely identifies a user. Should be same across user sessions.
+        type:
+          $ref: './defs/analytics/EventType.yaml'
+        ver:
+          type: integer
+          description: Version of the event being used. Should be set to 1.
+          example: 1
+        session_id:
+          type: string
+          maxLength: 64
+          description: >-
+            Uniquely identifies a session. Can be set to a random UUID generated
+            at session started time. Should be the same across all events of the
+            same session.
+        time:
+          type: number
+          format: int64
+          description: Time when event took place. Should be a unix timestamp in UTC.
+          example: 1528790031
+        platform:
+          $ref: './defs/analytics/Platform.yaml'
+        build:
+          $ref: './defs/analytics/Build.yaml'
+        custom_01:
+          $ref: './defs/analytics/CustomSegment.yaml'
+        custom_02:
+          $ref: './defs/analytics/CustomSegment.yaml'
+        custom_03:
+          $ref: './defs/analytics/CustomSegment.yaml'
+
+    session_started:
+      allOf:
+        - $ref: '#/components/schemas/AbstractEvent'
+        - type: object
+
+    session_ended:
+      allOf:
+        - $ref: '#/components/schemas/AbstractEvent'
+        - type: object
+          required:
+            - duration
+          properties:
+            duration:
+              type: integer
+              description: Duration of the session in seconds.
+
+    text_msg_sent:
+      allOf:
+        - $ref: '#/components/schemas/AbstractEvent'
+        - type: object
+          required:
+            - content
+            - channel_id
+          properties:
+            content:
+              type: string
+              maxLength: 512
+              description: UTF-8 encoded content of the text message.
+            channel_id:
+              type: string
+              maxLength: 64
+              description: >-
+                A channel can represent any social group where the text messages
+                was posted.
+            nick:
+              $ref: './defs/analytics/UserNick.yaml'
+
+    product_purchased:
+      allOf:
+        - $ref: '#/components/schemas/AbstractEvent'
+        - type: object
+          required:
+            - product_id
+            - amount
+            - currency
+          properties:
+            product_id:
+              type: string
+              maxLength: 64
+              description: Id of the purchased product
+            amount:
+              type: number
+              format: double
+              description: >-
+                Amount spent to purchase the product. Should be in units of the
+                specified currency.
+            currency:
+              type: string
+              minLength: 3
+              maxLength: 3
+              description: >-
+                Code representing the currency.
+                https://en.wikipedia.org/wiki/ISO_4217#Active_codes
+
+    SubmitEventsRequest:
+      type: array
+      items:
+        $ref: '#/components/schemas/AbstractEvent'
+    
+    ProviderConfig:
+      type: object
+      description: Abstract model for all providers.
+      required:
+        - type
+        - base_url
+        - secret
+      discriminator: type
+      properties:
+        type:
+          $ref: './defs/contentProviderConfig/ProviderType.yaml'
+        base_url:
+          type: string
+          description: End point.
+        secret:
+          type: string
+          description: Secret.
+    
+    azure:
+      allOf:
+        - $ref: '#/components/schemas/ProviderConfig'
+        - type: object
+
+    cleanspeak:
+      allOf:
+        - $ref: '#/components/schemas/ProviderConfig'
+        - type: object
+          required:
+            - cp_app_id
+          properties:
+            cp_app_id:
+              type: string
+              description: Cleanspeak App Id.
+
+    ProviderConfigResponse:
+      type: object
+      properties:
+        type:
+          $ref: './defs/contentProviderConfig/ProviderType.yaml'
+        base_url:
+          type: string
+          description: End point.
+        secret:
+          type: string
+          description: Secret.
+        cp_app_id:
+          type: string
+          description: App Id (cleanspeak specific)
+

@@ -1,0 +1,25 @@
+type: object
+required:
+  - nick
+  - status
+  - is_online
+properties:
+  nick:
+    type: string
+    description: The nick of user.
+  status_message:
+    type: string
+    description: The status of user.
+  profile_url:
+    type: string
+    description: The profile url of user.
+  is_online:
+    type: boolean
+    description: The user is online if true.
+  tokens:
+    type: object
+    description: A dictionary of push device tokens.
+    additionalProperties:
+      type: string
+    example:
+      fcm: "cJKxaEvuQaiC8-7uUlXl90:APA91bFC27dJWL476wWWRen0bcQPTRoGfCSSY7x..."

@@ -1,0 +1,972 @@
+openapi: 3.0.9
+info:
+  title: Fizz
+  description: |
+    API reference for the Fizz platform.
+
+    # Introduction
+    The Fizz platform comprises of the following services:
+      - **Analytics**: Run analysis on ingested events to provide insights into user behaviour and sentiment.
+      - **Chat**: A multilingual chat solution for integrating global audiences.
+      - **Cloud Messaging**: Create topics for communicating between users, systems etc reliably. Communicate using in-app messages or push notifications.
+      - **Translate**: Translate text in 36 languages in real-time with slang support.
+
+    # Authentication
+    Some Fizz APIs use a signature based authentication. Each application is provided with an Id and a secret.
+    The application Id is specified as part of the API route. However the secret is used to compute an HMAC-SHA256
+    digest of the raw body of the request. In case of get call body will be replaced with json containing nonce as property.
+    It is expected that the digest is supplied in the Authorization header with the keyword HMAC e.g<br/><br/>
+    digest = hmac_sha256(body, app_secret)<br/>
+    Authorization Header => HMAC-SHA256 digest
+    
+    # Glossary
+    ## Users 
+    All operations in the Fizz services are performed by users. A user is anything that uses the Fizz system. Users can include users, bots, systems etc Please note that Fizz does not ensure that users are uniquely identified and is the responsibility of the application system.
+    
+    ## Subscriber
+    An entities that subscribes to messages published on a topic (or channel).
+    
+    ## Topics
+    Implements a topic-based publish-subscribe system that allows entities (publishers) to send messages to subscribers in a reliable way.
+    
+    ## Channels
+    Establishes a channel of communication (or "chat-room") between different entities. Entities can publish messages to a channel which are then delivered to all subscribing entities. Channels persist all messages to a message journal which allows offline entities to read through the message history. A channel can also comprise of multiple topics for sharding large channels.
+    
+    ## Event
+    A thing of interest that takes place in a system. Fizz allows events to be ingested into the system. The analytics service runs various kinds of analyses on the ingested data to extract valuable insights.
+    
+
+  version: 1.1.0
+  termsOfService: ''
+  contact:
+    email: support@fizz.io
+
+servers:
+- url: http://localhost:3000/v1
+
+tags:
+  - name: Auth
+    description: Manage user authentication and authorization.
+  - name: User
+    description: Retreive and update information about the users.
+  - name: Channel
+    description: Create channels of multi-lingual chat amongst users.
+  - name: Topic
+    description: Provides access to a channel's topics.
+  - name: Group
+    description: Create groups of users with chat channels.
+  - name: Ingestion
+    description: Submit application events for ingestion.
+  - name: Exploration
+    description: Explore metrics and message data by posting queries.
+  - name: Messaging
+    description: Send messages between different entities.
+  - name: Moderation
+    description: Modertate the chat content.
+  - name: Translate
+    description: Translate text into multiple languages.
+  - name: Preferences
+    description: Manage prefernces.
+  - name: Configurations
+    description: Manage configurations.
+  - name: User
+    description: Retreive and update information about the users.
+  - name: GDPR
+    description: Create and manange GDPR requests of the users.
+    
+scheme:
+  - http
+    
+paths:
+  '/sessions':
+    $ref: './api-auth.yaml#/paths/sessionAuth'
+
+  '/sessions/{userId}':
+    $ref: './api-auth.yaml#/paths/updateSessionAuth'
+
+  '/admins':
+    $ref: './api-auth.yaml#/paths/adminManagement'
+
+  '/mutes':
+    $ref: './api-auth.yaml#/paths/AppMutes'
+          
+  '/apps/{appId}/events':
+    post:
+      tags:
+        - Ingestion
+      description: Submit events for ingestion.
+      operationId: submitEventsWithDigest
+      parameters:
+        - name: appId
+          description: The application Id.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              description: An array of events to ingest.
+              $ref: '#/components/schemas/submitEventsWithDigestRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+  '/events':
+    post:
+      tags:
+        - Ingestion
+      summary: Ingestion application events
+      description: Submit application events to track user behavior and generate insights.
+      operationId: SubmitEvents
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              description: An array of events to ingest.
+              $ref: '#/components/schemas/SubmitEventsRequest' 
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  '/apps/{appId}/queries/metrics':
+    post:
+      tags:
+        - Exploration
+      description: API for querying metrics data points.
+      parameters:
+        - name: appId
+          description: The application Id.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              description: Post a metrics query to be executed.
+              $ref: '#/components/schemas/MetricsQuery'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+      - digest: []
+
+  '/apps/{appId}/queries/messages':
+    post:
+      tags:
+        - Exploration
+      description: API for querying messages by specifying a search criteria.
+      parameters:
+        - name: appId
+          description: The application Id.
+          in: path
+          required: true
+          schema:
+            type: string   
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              description: Post a messages query to be executed.
+              $ref: '#/components/schemas/MessagesQuery'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+      - digest: []
+
+  '/apps/{appId}/queries/keywords':
+    post:
+      tags:
+        - Exploration
+      description: API for querying keywords by specifying a search criteria.
+      parameters:
+        - name: appId
+          description: The application Id.
+          in: path
+          required: true
+          schema:
+            type: string   
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              description: Post a keywords query to be executed.
+              $ref: '#/components/schemas/KeywordsQuery'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeywordsResponse'
+      security:
+      - digest: []
+
+  '/queries/reports':
+    $ref: './api-chat-moderation.yaml#/paths/SearchReportMessage'
+
+  '/queries/reportedUsers':
+    $ref: './api-chat-moderation.yaml#/paths/SearchReportedMessageUsers'
+    
+  '/queries/reportedChannels':
+    $ref: './api-chat-moderation.yaml#/paths/SearchReportedMessageChannels'
+      
+  '/channels/{channelId}/messages':
+    $ref: './api-chat.yaml#/paths/ChannelMessages'
+
+  '/channels/{channelId}/messages/{messageId}':
+    $ref: './api-chat.yaml#/paths/ChannelMessageById'
+
+  '/channels/{channelId}/subscribers':
+    $ref: './api-chat.yaml#/paths/ChannelSubscribers'
+
+  '/channels/{channelId}/bans':
+    $ref: './api-chat.yaml#/paths/ChannelBans'
+
+  '/channels/{channelId}/bans/{bannedUserId}':
+    $ref: './api-chat.yaml#/paths/ChannelBanById'
+
+  '/channels/{channelId}/mutes':
+    $ref: './api-chat.yaml#/paths/ChannelMutes'
+
+  '/channels/{channelId}/mutes/{mutedUserId}':
+    $ref: './api-chat.yaml#/paths/ChannelMuteById'
+
+  '/channels/{channelId}/topics':
+    $ref: './api-chat.yaml#/paths/ChannelTopics'
+
+  '/channels/{channelId}/topics/{topicId}/messages':
+    $ref: './api-chat.yaml#/paths/ChannelTopicMessages'
+
+  '/groups':
+    $ref: './api-group.yaml#/paths/Groups'
+
+  '/groups/{groupId}':
+    $ref: './api-group.yaml#/paths/Group'
+
+  '/groups/{groupId}/members':
+    $ref: './api-group.yaml#/paths/GroupMembers'
+
+  '/groups/{groupId}/members/{memberId}':
+    $ref: './api-group.yaml#/paths/GroupMember'
+
+  '/groups/{groupId}/mutes':
+    $ref: './api-group.yaml#/paths/MuteGroupMember'
+
+  '/groups/{groupId}/mutes/{memberId}':
+    $ref: './api-group.yaml#/paths/UnMuteGroupMember'
+
+  '/groups/{groupId}/messages':
+    $ref: './api-group.yaml#/paths/GroupMessages'
+
+  '/users/{userId}/groups':
+    $ref: './api-user-group.yaml#/paths/UserGroups'
+
+  '/users/{userId}/groups/{groupId}':
+    $ref: './api-user-group.yaml#/paths/UserGroup'
+
+  '/reports':
+    $ref: './api-chat-moderation.yaml#/paths/ReportMessage'
+
+  '/translations':
+    $ref: './api-translate.yaml#/paths/TranslateText'
+
+  '/apps/{appId}/logs/{logId}':
+    $ref: './api-logger.yaml#/paths/Logger' 
+
+  '/moderatedTexts':
+    $ref: './api-text-moderation.yaml#/paths/TextModeration'
+
+  '/configs':
+    $ref: './api-application-config.yaml#/paths/ApplicationConfig'
+
+  '/configs/contentModerators':
+    post:
+      tags:
+        - Configurations
+      summary: Save content provider configuration
+      description: Submit content provider configuration to filter out profane words to sanitize text.
+      operationId: SaveContentProviderConfig
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/ProviderConfig'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+    get:
+      tags:
+        - Configurations
+      summary: Query content provider configuration
+      description: Query content provider configuration.
+      operationId: FetchContentProviderConfig
+      responses:
+        '200':
+          description: The content provider configuration.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderConfigResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+    delete:
+      tags:
+        - Configurations
+      summary: Remove content provider configuration
+      description: Remove content provider configuration.
+      operationId: RemoveContentProviderConfig
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+  '/configs/push':
+    $ref: './api-application-config.yaml#/paths/PushConfig_Post'
+
+  '/configs/push/{platform}':
+    $ref: './api-application-config.yaml#/paths/PushConfig_GetDelete'
+
+  '/preferences':
+    $ref: './api-application-config.yaml#/paths/Preferences'
+
+  '/users/{userId}':
+    $ref: './api-user.yaml#/paths/QueryUser'
+
+  '/users/{userId}/subscribers':
+    $ref: './api-user.yaml#/paths/UserSubscribers'
+
+  '/users/{userId}/devices':
+    $ref: './api-user.yaml#/paths/UserDevices'
+
+  '/users/{userId}/devices/{platform}':
+    $ref: './api-user.yaml#/paths/UserDevice'
+
+  '/privacy/gdpr':
+    $ref: './api-gdpr.yaml#/paths/GDPRRequests'
+    
+  '/privacy/gdpr/{requestId}':
+    $ref: './api-gdpr.yaml#/paths/GDPRRequest'
+
+components:
+  securitySchemes:
+    digest:
+      type: apiKey
+      in: header
+      name: "Authorization"
+      description: "HMAC SHA256 digest of the request body. Please see the introduction for more details."
+
+    session_token:
+      type: apiKey
+      in: header
+      name: "Session-Token"
+      description: "Session token generated using the application credentials."
+
+  schemas:
+    AbstractEvent:
+      type: object
+      description: Abstract base model for all events. Do not use this model directly.
+      required:
+        - user_id
+        - type
+        - time
+        - ver
+        - session_id
+      discriminator: type
+      properties:
+        user_id:
+          type: string
+          maxLength: 64
+          description: Uniquely identifies a user. Should be same across user sessions.
+        type:
+          $ref: './defs/analytics/EventType.yaml'
+        ver:
+          type: integer
+          description: Version of the event being used. Should be set to 1.
+          example: 1
+        session_id:
+          type: string
+          maxLength: 64
+          description: >-
+            Uniquely identifies a session. Can be set to a random UUID generated
+            at session started time. Should be the same across all events of the
+            same session.
+        time:
+          type: number
+          format: int64
+          description: Time when event took place. Should be a unix timestamp in UTC.
+          example: 1528790031
+        platform:
+          $ref: './defs/analytics/Platform.yaml'
+        build:
+          $ref: './defs/analytics/Build.yaml'
+        custom_01:
+          $ref: './defs/analytics/CustomSegment.yaml'
+        custom_02:
+          $ref: './defs/analytics/CustomSegment.yaml'
+        custom_03:
+          $ref: './defs/analytics/CustomSegment.yaml'
+
+    session_started:
+      allOf:
+        - $ref: '#/components/schemas/AbstractEvent'
+        - type: object
+
+    session_ended:
+      allOf:
+        - $ref: '#/components/schemas/AbstractEvent'
+        - type: object
+          required:
+            - duration
+          properties:
+            duration:
+              type: integer
+              description: Duration of the session in seconds.
+
+    text_msg_sent:
+      allOf:
+        - $ref: '#/components/schemas/AbstractEvent'
+        - type: object
+          required:
+            - content
+            - channel_id
+          properties:
+            content:
+              type: string
+              maxLength: 512
+              description: UTF-8 encoded content of the text message.
+            channel_id:
+              type: string
+              maxLength: 64
+              description: >-
+                A channel can represent any social group where the text messages
+                was posted.
+            nick:
+              $ref: './defs/analytics/UserNick.yaml'
+
+    product_purchased:
+      allOf:
+        - $ref: '#/components/schemas/AbstractEvent'
+        - type: object
+          required:
+            - product_id
+            - amount
+            - currency
+          properties:
+            product_id:
+              type: string
+              maxLength: 64
+              description: Id of the purchased product
+            amount:
+              type: number
+              format: double
+              description: >-
+                Amount spent to purchase the product. Should be in units of the
+                specified currency.
+            currency:
+              type: string
+              minLength: 3
+              maxLength: 3
+              description: >-
+                Code representing the currency.
+                https://en.wikipedia.org/wiki/ISO_4217#Active_codes
+            receipt:
+              type: string
+              description: >-
+                Receipt of this purcahsed product.
+                
+    text_msg_translated:
+      allOf:
+        - $ref: '#/components/schemas/AbstractEvent'
+        - type: object
+          required:
+            - message_id
+            - from
+            - to
+            - len
+          properties:
+            message_id:
+              type: string
+              maxLength: 512
+              description: Uniquely identifies the translated action.
+            from:
+              $ref: './defs/common/LanguageCode.yaml'
+            to:
+              type: array
+              items:
+                $ref: './defs/common/LanguageCode.yaml'
+            len:
+              type: integer
+              description: total no of characters translated.
+
+    MetricId:
+      description: Id of metric to query.
+      type: string
+      enum:
+        - new_users_count_daily
+        - new_users_count_monthly
+        - active_users_count_daily
+        - active_paying_users_count_daily
+        - active_users_count_monthly
+        - active_users_count_monthly_billing
+        - active_users_count_mid_monthly_billing
+        - chat_messages_count_daily
+        - chat_messages_count_monthly
+        - chars_translated_daily
+        - chars_translated_monthly
+        - chars_translated_monthly_billing
+        - chars_translated_mid_monthly_billing
+        - user_sessions_count_daily
+        - user_sessions_dur_total_daily
+        - user_sessions_dur_mean_daily
+        - user_sessions_dur_min_daily
+        - user_sessions_dur_max_daily
+        - user_sessions_count_monthly
+        - user_sessions_dur_total_monthly
+        - user_sessions_dur_mean_monthly
+        - user_sessions_dur_min_monthly
+        - user_sessions_dur_max_monthly
+        - sentiment_negative_count_daily
+        - sentiment_positive_count_daily
+        - sentiment_neutral_count_daily
+        - sentiment_negative_count_monthly
+        - sentiment_positive_count_monthly
+        - sentiment_neutral_count_monthly
+        - sentiment_mean_daily
+        - sentiment_min_daily
+        - sentiment_max_daily
+        - sentiment_mean_monthly
+        - sentiment_min_monthly
+        - sentiment_max_monthly
+        - revenue_sum_daily
+        - revenue_min_daily
+        - revenue_max_daily
+        - revenue_sum_monthly
+        - revenue_min_monthly
+        - revenue_max_monthly
+
+    MetricQuery:
+      type: object
+      required:
+        - metric
+      properties:
+        metric:
+          $ref: '#/components/schemas/MetricId'
+
+    MetricsQuery:
+      type: object
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: number
+          format: int64
+          description: >-
+            The start time of the query. Specify a unix timestamp (seconds since
+            epoch).
+          example: 1514764800
+        end:
+          type: number
+          format: int64
+          description: >-
+            The end time of the query. Specify a unix timestamp (seconds since
+            epoch).
+          example: 1528790031
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricQuery'
+        segment:
+          type: object
+          maxProperties: 1
+          description: >-
+            Key can only be any value from "any, geo, platform, build, custom01, custom02, custom03, age, spend". Value should only be alpha numeric.
+
+    SegmentAge:
+      type: string
+      enum:
+        - day_1_3
+        - day_4_7
+        - day_8_14
+        - day_15_30
+        - day_30_
+
+    SegmentSpender:
+      type: string
+      enum:
+        - none
+        - minnow
+        - dolphin
+        - whale
+
+    ComparisonOp:
+      type: string
+      enum:
+        - lt
+        - lte
+        - eq
+        - gt
+        - gte
+        - btw
+
+    SentimentValueDefine:
+      type: number
+      format: decimal
+      minimum: -1
+      maximum: 1
+
+    SentimentValue:
+      type: object
+      description: This is a dynamic value based of given 'op' value. 1) it will be json if 'op' value is 'btw' 2) it will be 'double' in case of all other 'op' values.
+      properties:
+        from:
+          $ref: '#/components/schemas/SentimentValueDefine'
+        to:
+          $ref: '#/components/schemas/SentimentValueDefine'
+      required: [from, to]
+      additionalProperties: 
+        default:
+          '#/components/schemas/SentimentValueDefine'
+
+    MessagesQuery:
+      type: object
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: number
+          format: int64
+          description: >-
+            The start time of the query. Specify a unix timestamp (seconds since
+            epoch).
+          example: 1514764800
+        end:
+          type: number
+          format: int64
+          description: >-
+            The end time of the query. Specify a unix timestamp (seconds since
+            epoch).
+          example: 1528790031
+        sort:
+          $ref: './defs/common/SortOrder.yaml'
+        cursor:
+          type: number
+          format: int64
+          description: Start index of query result.
+        page_size:
+          type: number
+          format: int64
+          description: Page size of result.
+          example: 10
+        text:
+          type: string
+          description: Search using words in the specified text.
+        phrase:
+          type: string
+          description: Search using the specified phrase.
+        channel_id:
+          type: string
+          maxLength: 64
+          description: Search messages in the specified channel id.
+        user_id:
+          type: string
+          maxLength: 64
+          description: Search for all messages sent by the sender specified by id.
+        nick:
+          $ref: './defs/analytics/UserNick.yaml'
+        country_code:
+          type: string
+          maxLength: 2
+          description: iso standard 2 digits country code.  
+        platform:
+          $ref: './defs/analytics/Platform.yaml'
+        build:
+          $ref: './defs/analytics/Build.yaml'
+        custom_01:
+          $ref: './defs/analytics/CustomSegment.yaml'
+        custom_02:
+          $ref: './defs/analytics/CustomSegment.yaml'
+        custom_03:
+          $ref: './defs/analytics/CustomSegment.yaml'
+        age:
+          $ref: '#/components/schemas/SegmentAge'
+        spender:
+          $ref: '#/components/schemas/SegmentSpender'
+        sentiment_score:
+          type: object
+          properties:
+            op:
+              $ref: '#/components/schemas/ComparisonOp'
+            score:
+              $ref: "#/components/schemas/SentimentValue"
+          required: [op, score]
+          example:
+            op: 'eq'
+            score: 0.25
+
+    KeywordsQuery:
+      type: object
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: number
+          format: int64
+          description: >-
+            The start time of the query. Specify a unix timestamp (seconds since
+            epoch).
+          example: 1514764800
+        end:
+          type: number
+          format: int64
+          description: >-
+            The end time of the query. Specify a unix timestamp (seconds since
+            epoch).
+          example: 1528790031
+        text:
+          type: string
+          description: Search using words in the specified text.
+        phrase:
+          type: string
+          description: Search using the specified phrase.
+        channel_id:
+          type: string
+          maxLength: 64
+          description: Search messages in the specified channel id.
+        user_id:
+          type: string
+          maxLength: 64
+          description: Search for all messages sent by the sender specified by id.
+        nick:
+          $ref: './defs/analytics/UserNick.yaml'
+        country_code:
+          type: string
+          maxLength: 2
+          description: iso standard 2 digits country code.  
+        platform:
+          $ref: './defs/analytics/Platform.yaml'
+        build:
+          $ref: './defs/analytics/Build.yaml'
+        custom_01:
+          $ref: './defs/analytics/CustomSegment.yaml'
+        custom_02:
+          $ref: './defs/analytics/CustomSegment.yaml'
+        custom_03:
+          $ref: './defs/analytics/CustomSegment.yaml'
+        age:
+          $ref: '#/components/schemas/SegmentAge'
+        spender:
+          $ref: '#/components/schemas/SegmentSpender'
+        sentiment_score:
+          type: object
+          properties:
+            op:
+              $ref: '#/components/schemas/ComparisonOp'
+            score:
+              $ref: "#/components/schemas/SentimentValue"
+          required: [op, score]
+          example:
+            op: 'eq'
+            score: 0.25
+
+    KeywordsResponse:
+      type: object
+      properties:
+        keywords:
+          type: array
+          items:
+            $ref: '#/components/schemas/Keyword'
+    
+    Keyword:
+      type: object
+      properties:
+        keyword:
+          type: string
+        count:
+          type: integer
+
+    TopicMessageModel:
+      type: object
+      required:
+        - id
+        - from
+        - type
+        - data
+      properties:
+        id:
+          type: number
+          format: int64
+          description: Uniquely identifies the message in the topic.
+        from:
+          type: string
+          description: Id of the sending user.
+        type:
+          type: string
+          description: Type of the message.
+        data:
+          type: string
+          maxLength: 2048
+          description: The message payload (data).
+
+    submitEventsWithDigestRequest:
+      type: array
+      items:
+        $ref: '#/components/schemas/AbstractEvent'
+
+    SubmitEventsRequest:
+      type: array
+      items:
+        $ref: '#/components/schemas/AbstractEvent' 
+
+    ProviderConfig:
+      type: object
+      description: Abstract model for all providers.
+      required:
+        - type
+        - base_url
+        - secret
+      discriminator: type
+      properties:
+        type:
+          $ref: './defs/contentProviderConfig/ProviderType.yaml'
+        base_url:
+          type: string
+          description: End point.
+        secret:
+          type: string
+          description: Secret.
+    
+    azure:
+      allOf:
+        - $ref: '#/components/schemas/ProviderConfig'
+        - type: object
+
+    cleanspeak:
+      allOf:
+        - $ref: '#/components/schemas/ProviderConfig'
+        - type: object
+          required:
+            - cp_app_id
+          properties:
+            cp_app_id:
+              type: string
+              description: Cleanspeak App Id.
+
+    ProviderConfigResponse:
+      type: object
+      properties:
+        type:
+          $ref: './defs/contentProviderConfig/ProviderType.yaml'
+        base_url:
+          type: string
+          description: End point.
+        secret:
+          type: string
+          description: Secret.
+        cp_app_id:
+          type: string
+          description: App Id (cleanspeak specific)
+
+
+
+              

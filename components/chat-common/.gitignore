@@ -1,0 +1,5 @@
+# proto files
+HBaseClientModels.java
+
+#vertx proxy
+src/main/generated

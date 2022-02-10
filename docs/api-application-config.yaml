@@ -1,0 +1,249 @@
+paths:
+  ApplicationConfig:
+    get:
+      tags:
+        - Configurations
+      summary: Query all configurations
+      description: It will return all application configurations.
+      operationId: FetchConfigurations
+      responses:
+        '200':
+          description: The application configurations.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationConfigResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+  PushConfig_Post:
+    post:
+      tags:
+        - Configurations
+      summary: Save push notification configuration for a specific platform
+      description: Submit push notification config for a specific platform.  New value will be refelcted after expiration of cache.
+      operationId: SavePushConfig
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/PushConfig'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+  PushConfig_GetDelete:
+    get:
+      tags:
+        - Configurations
+      summary: Fetch push notification configuration
+      description: Fetch push notification configuration of specific platform.
+      operationId: FetchPushConfig
+      parameters:
+        - name: platform
+          description: Push notification service platform.
+          in: path
+          required: true
+          schema:
+            type: string 
+      responses:
+        '200':
+          description: The push notification configuration.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PushConfigResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+    delete:
+      tags:
+        - Configurations
+      summary: Remove push notification configuration for a specific platform.
+      description: Remove push notification configuration for a specific platform. Deleted value will be refelcted after expiration of cache.
+      operationId: RemovePushConfig
+      parameters:
+        - name: platform
+          description: Push notification service platform.
+          in: path
+          required: true
+          schema:
+            type: string 
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+  Preferences:
+    post:
+      tags:
+        - Preferences
+      summary: Save application preferences.
+      description: Save application preferences with new values. New value will be refelcted after expiration of cache.
+      operationId: SavePreferences
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/Preferences'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+    get:
+      tags:
+        - Preferences
+      summary: Fetch application preferences
+      description: Fetch application preferences. It will return default values if no preferences is set.
+      operationId: FetchPreferences
+      responses:
+        '200':
+          description: The preferences.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreferencesResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+components:
+  schemas:
+    ApplicationConfigResponse:
+      type: object
+      properties:
+        contentModerator:
+          description: The content provider configuration.
+          $ref: './api-reference.yaml#/components/schemas/ProviderConfigResponse'
+        push:
+          description: The push notification configuration.
+          $ref: '#/components/schemas/PushConfigResponse'
+    
+    PushConfig:
+      type: object
+      description: Abstract model for all push config.
+      required:
+        - platform
+        - secret
+      # discriminator: platform
+      properties:
+        platform:
+          $ref: './defs/applicationConfig/PushPlatformType.yaml'
+        secret:
+          type: string
+          description: Secret.
+
+    PushConfigResponse:
+      type: object
+      properties:
+        platform:
+          $ref: './defs/applicationConfig/PushPlatformType.yaml'
+        secret:
+          type: string
+          description: Secret.
+
+    Preferences:
+      type: object
+      description: Abstract model for all preferences.
+      properties:
+        force_content_moderation:
+          type: boolean
+          description: Force content filtering of all chat messages.
+
+    PreferencesResponse:
+      type: object
+      properties:
+        force_content_moderation:
+          type: boolean
+          default: false
+          description: Force content filtering of all chat messages.
+    
+

@@ -1,0 +1,348 @@
+components:
+  schemas:
+    ReportMessage:
+      required:
+        - channel_id
+        - message
+        - message_id
+        - language
+        - user_id
+        - offense
+      properties:
+        channel_id:
+          type: string
+          description: The channel's Id (name).
+        message:
+          type: string
+          maxLength: 1024
+          description: The body of reported message.
+        message_id:
+          type: string
+          description: The id of the message.
+        language:
+          $ref: './defs/common/LanguageCode.yaml'
+        user_id:
+          $ref: './defs/common/UserId.yaml'
+        offense:
+          $ref: './defs/common/Offense.yaml'
+        description:
+          type: string
+          maxLength: 1024
+          description: Any user provided information about the reported message.
+
+    SearchReportMessage:
+      required:
+        - start
+        - end
+      properties:
+        channel_id:
+          type: string
+          description: The channel's Id (name).
+        language:
+          $ref: './defs/common/LanguageCode.yaml'
+        user_id:
+          $ref: './defs/common/UserId.yaml'
+        sort:
+          $ref: './defs/common/SortOrder.yaml'
+        cursor:
+          type: number
+          format: int64
+          description: Start index of query result.
+        page_size:
+          type: number
+          format: int64
+          description: Page size of result.
+          example: 10
+        start:
+          type: number
+          format: int64
+          description: Start Unix timestamp (in milliseconds) of the message's creation time.
+        end:
+          type: number
+          format: int64
+          description: End Unix timestamp (in milliseconds) of the message's creation time.
+
+    SearchReportMessageResultData:
+      required:
+        - id
+        - channel_id
+        - message
+        - message_id
+        - language
+        - user_id
+        - reporter_id
+        - offense
+        - description
+        - time
+      properties:
+        id:
+          type: string
+          description: Unique identifier of reported message.
+        channel_id:
+          type: string
+          description: The channel's Id (name).
+        message:
+          type: string
+          maxLength: 1024
+          description: The body of reported message.
+        message_id:
+          type: string
+          description: The id of the message.
+        language:
+          $ref: './defs/common/LanguageCode.yaml'
+        user_id:
+          $ref: './defs/common/UserId.yaml'
+        reporter_id:
+          $ref: './defs/common/UserId.yaml'
+        offense:
+          $ref: './defs/common/Offense.yaml'
+        description:
+          type: string
+          maxLength: 1024
+          description: Any user provided information about the reported message.
+        time:
+          type: number
+          format: int64
+          description: Unix timestamp (in milliseconds) of the message's creation time.
+          
+    SearchReportMessageResult:
+      required:
+        - data
+        - total_size
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchReportMessageResultData'
+        total_size:
+          type: number
+          format: int64
+          description: Total result size against the query.
+
+    SearchReportMessageUser:
+      required:
+        - start
+        - end
+      properties:
+        channel_id:
+          type: string
+          description: The channel's Id (name).
+        language:
+          $ref: './defs/common/LanguageCode.yaml'
+        limit:
+          type: number
+          format: int32
+          description: Limit the number of messages to aggregate.
+        start:
+          type: number
+          format: int64
+          description: Start Unix timestamp (in milliseconds) of the message's creation time.
+        end:
+          type: number
+          format: int64
+          description: End Unix timestamp (in milliseconds) of the message's creation time.
+
+    SearchReportMessageUserResult:
+      required:
+        - user_id
+        - count
+      properties:
+        user_id:
+          $ref: './defs/common/UserId.yaml'
+        count:
+          type: number
+          format: int64
+          description: No of reported message of the user.
+          example: 10
+
+    SearchReportMessageUserResultList:
+      type: array
+      items:
+        $ref: '#/components/schemas/SearchReportMessageUserResult'
+
+    SearchReportMessageChannel:
+      required:
+        - start
+        - end
+      properties:
+        language:
+          $ref: './defs/common/LanguageCode.yaml'
+        limit:
+          type: number
+          format: int32
+          description: Limit the number of messages to aggregate.
+        start:
+          type: number
+          format: int64
+          description: Start Unix timestamp (in milliseconds) of the message's creation time.
+        end:
+          type: number
+          format: int64
+          description: End Unix timestamp (in milliseconds) of the message's creation time.
+
+    SearchReportMessageChannelResult:
+      required:
+        - channel_id
+        - count
+      properties:
+        channel_id:
+          type: string
+          description: The channel's Id (name).
+        count:
+          type: number
+          format: int64
+          description: No of reported message in the channel.
+          example: 10
+
+    SearchReportMessageChannelResultList:
+      type: array
+      items:
+        $ref: '#/components/schemas/SearchReportMessageChannelResult'
+
+    ReportMessageResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of reported message.
+
+paths:
+  ReportMessage:
+    post:
+      operationId: ReportMessage
+      tags:
+        - Moderation
+      summary: Report chat message
+      description: report chat message of others.
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              description: Unable users to report chat message of other chat users.
+              $ref: '#/components/schemas/ReportMessage'      
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportMessageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  SearchReportMessage:
+    post:
+      operationId: SearchReportMessage
+      tags:
+        - Exploration
+      summary: search reported messages
+      description: fetch the list of reported messages with given filters.
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              description: Query to search reported messages.
+              $ref: '#/components/schemas/SearchReportMessage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchReportMessageResult'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  SearchReportedMessageUsers:
+    post:
+      operationId: SearchReportedMessageUsers
+      tags:
+        - Exploration
+      summary: aggregate reported messages users with given filters.
+      description: search the list of reported messages users with given filter.
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              description: Query to search reported messages users.
+              $ref: '#/components/schemas/SearchReportMessageUser'       
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchReportMessageUserResultList'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+      
+  SearchReportedMessageChannels:
+    post:
+      operationId: SearchReportedMessageChannels
+      tags:
+        - Exploration
+      summary: aggregate reported messages channels with given filters.
+      description: search the list of reported messages channel with given filter.
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              description: Query to search reported messages channels.
+              $ref: '#/components/schemas/SearchReportMessageChannel' 
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchReportMessageChannelResultList'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []

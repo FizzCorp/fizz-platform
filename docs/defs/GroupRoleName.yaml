@@ -1,0 +1,5 @@
+type: string
+description: Roles that can be assigned within a group.
+enum:
+  - member
+  - moderator

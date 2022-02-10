@@ -1,0 +1,16 @@
+required:
+  - id
+  - role
+  - state
+  - created
+properties:
+  id:
+    $ref: './common/UserId.yaml'
+  role:
+    $ref: './GroupRoleName.yaml'
+  state:
+    $ref: './GroupMemberState.yaml'
+  created:
+    type: number
+    format: int64
+    description: Unix timestamp (in milliseconds) of the groups's creation time.

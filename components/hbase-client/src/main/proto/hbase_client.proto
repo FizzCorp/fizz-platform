@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package hbase_client;
+
+option java_package = "io.fizz.client.hbase";
+option java_outer_classname = "HBaseClientModels";
+
+message ColumnCoord {
+    bytes family = 1;
+    bytes qualifier = 2;
+}
+
+message ColumnValue {
+    ColumnCoord key = 1;
+    bytes value = 3;
+}
+
+message Table {
+    bytes namespace = 1;
+    bytes name = 2;
+}
+
+message Put {
+    Table table = 1;
+    bytes rowKey = 2;
+    repeated ColumnValue columns = 3;
+    ColumnValue condition = 4;
+    int64 ttl = 5;
+}
+
+message ColumnPaginationFilter {
+    bytes start = 1;
+    int32 limit = 2;
+}
+
+message Get {
+    Table table = 1;
+    bytes rowKey = 2;
+    repeated bytes families = 3;
+    repeated ColumnCoord columns = 4;
+    ColumnPaginationFilter filter = 5;
+}
+
+message Scan {
+    Table table = 1;
+    bytes startRowKey = 2;
+    bytes endRowKey = 3;
+    repeated bytes families = 4;
+    repeated ColumnCoord columns = 5;
+    int32 limit = 6;
+    bool reversed = 7;
+}
+
+message Increment {
+    Table table = 1;
+    bytes rowKey = 2;
+    ColumnCoord column = 3;
+    int64 amount = 4;
+}
+
+message Delete {
+    Table table = 1;
+    bytes rowKey = 2;
+    repeated ColumnCoord columns = 3;
+}
+
+message Result {
+    repeated ColumnValue columns = 1;
+}
+
+message Scanner {
+    repeated Result rows = 1;
+}

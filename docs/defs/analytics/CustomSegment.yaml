@@ -1,0 +1,5 @@
+description: >-
+  A custom segment that can be used for various reason e.g A/B testing,
+  classifying users etc
+type: string
+maxLength: 32

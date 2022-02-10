@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.fizz.command.bus.impl.generated";
+option java_outer_classname = "CommandBus";
+
+service ProxyService {
+    rpc proxy(RequestModel) returns (ReplyModel) {}
+}
+
+message RequestModel {
+    string to = 1;
+    bytes payload = 2;
+}
+
+message ReplyModel {
+    int32 status = 1;
+    bytes payload = 2;
+    string cause = 3;
+}
+
+message KafkaClusterNodeModel {
+    string id = 1;
+    string host = 2;
+    int32  port = 3;
+}
+
+message KafkaClusterPartitionModel {
+    string topic = 1;
+    int32 partition = 2;
+}
+
+message KafkaClusterNodeAssignmentModel {
+    KafkaClusterNodeModel node = 1;
+    repeated KafkaClusterPartitionModel partitions = 2;
+}
+
+message KafkaClusterTopicModel {
+    string topic = 1;
+    int32 partitions = 2;
+}
+
+message KafkaClusterModel {
+    repeated KafkaClusterTopicModel topics = 1;
+    repeated KafkaClusterNodeAssignmentModel assignments = 2;
+}

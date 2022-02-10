@@ -1,0 +1,50 @@
+paths:
+  TextModeration:
+    post:
+      operationId: filterTexts
+      tags:
+        - Moderation
+      summary: Moderate text
+      description: Filter out profane words to sanitize text.
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              description: List of texts (max 5) for moderation.
+              $ref: '#/components/schemas/FilterTextsRequest' 
+      responses:
+        '200':
+          description: List of moderated texts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilterTextsResponse' 
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+components:
+  schemas:
+    FilterTextsRequest:
+      type: array
+      minItems: 1
+      maxItems: 5
+      items:
+        type: string
+        maxLength: 1024
+    
+    FilterTextsResponse:
+      type: array
+      items:
+        type: string

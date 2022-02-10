@@ -1,0 +1,5 @@
+description: Type of the provider.
+type: string
+enum:
+  - azure
+  - cleanspeak

@@ -1,0 +1,117 @@
+paths:
+  Logger:
+    post:
+      operationId: submitLog
+      tags:
+        - Logger
+      summary: Submit Log
+      description: Submit Log against logId.
+      parameters:
+        - name: appId
+          description: The application Id.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: logId
+          description: The Log Id.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/SubmitLogRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+    get:
+      operationId: fetchLogs
+      tags:
+        - Logger
+      summary: Fetch Logs
+      description: Fetch specific number of logs against logId.
+      parameters:
+        - name: appId
+          description: The application Id.
+          in: path
+          required: true
+          schema:
+            type: string  
+        - name: logId
+          description: The Log Id.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: count
+          description: Number of logs to be fetched.
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+        - name: nonce
+          description: Unique identifier for single occasion.
+          in: query
+          required: true
+          schema:
+            type: string        
+      responses:
+        '200':
+          description: List of log items.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitLogResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+components:
+  schemas:
+    SubmitLogRequest:
+      type: object
+      properties:
+        log_item:
+          description: Message string to be logged.
+          type: string
+
+    SubmitLogResponse:
+      type: array
+      items: 
+        type: string
+
+

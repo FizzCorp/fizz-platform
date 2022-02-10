@@ -1,0 +1,4 @@
+description: Type of the push notification platform.
+type: string
+enum:
+  - fcm

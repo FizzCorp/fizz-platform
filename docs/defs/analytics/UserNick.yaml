@@ -1,0 +1,3 @@
+description: Nick/Alias of the user sending the message.
+type: string
+maxLength: 32

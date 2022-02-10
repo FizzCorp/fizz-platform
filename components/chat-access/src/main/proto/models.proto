@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package hbaseClient;
+
+option java_package = "io.fizz.chataccess.infrastructure.persistence";
+option java_outer_classname = "Models";
+
+message UserMappingModel {
+    repeated string groups = 1;
+    repeated GroupMemberModel memberships = 2;
+}
+
+message UserContextMemberships {
+    repeated GroupMemberModel memberships = 1;
+}
+
+message Time {
+    int64 value = 1;
+}
+
+message GroupMemberModel {
+    string memberId = 1;
+    string groupName = 2;
+    Time ends = 3;
+    string description = 4;
+}

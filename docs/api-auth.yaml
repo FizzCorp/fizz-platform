@@ -1,0 +1,342 @@
+paths:
+  sessionAuth:
+    post:
+      tags:
+        - Auth
+      description: Authenticate and create a new session for a user.
+      summary: Create user session
+      operationId: CreateSession
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/SessionAuthRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './defs/SessionAuthReply.yaml'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+  updateSessionAuth:
+    post:
+      tags:
+        - Auth
+      description: Update an existing session of a user.
+      summary: Update user session
+      operationId: UpdateSession
+      parameters:
+        - name: userId
+          description: The Id of the user associated with the session.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/UpdateSessionAuthRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+  
+  adminManagement:
+    post:
+      tags:
+        - Auth
+      description: Assign the administrator role to the user identified by the specified id.
+      summary: Create an administrator
+      operationId: CreateAdministrator
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/CreateAdminRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+    
+    delete:
+      tags:
+        - Auth
+      description: Revoke the administrator role from the user identified by the specified id.
+      summary: Remove an administrator
+      operationId: RemoveAdministrator
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/RemoveAdminRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+  AppMutes:
+    post:
+      tags:
+        - Auth
+      summary: Mute an application user
+      description: Mutes the user in the application scope. Muted users can only retreive messages from the channels and groups.
+      operationId: MuteApplicationUser
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/ApplyAppMuteUserRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+ 
+    delete:
+      tags:
+        - Auth
+      summary: Unmute an application user
+      description: Removes the mute from the application scope. Please note that mutes applied at the channel or group scope are not removed.
+      operationId: UnmuteApplicationUser
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/RemoveAppMuteUserRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+components:
+  schemas:
+    SessionAuthRequest:
+      description: The session information.
+      type: object
+      required:
+        - user_id
+        - app_id
+        - locale
+      properties:
+        user_id:
+          $ref: './defs/common/UserId.yaml'
+        app_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Uniquely identifies the Fizz application.
+        locale:
+          $ref: './defs/common/LanguageCode.yaml'
+        channels:
+          allOf:
+            - $ref: '#/components/schemas/AllowedChannels'
+          default: null
+
+    UpdateSessionAuthRequest:
+      description: The update session information.
+      type: object
+      required:
+        - app_id
+        - token
+      properties:
+        app_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Uniquely identifies the Fizz application.
+        token:
+          type: string
+          description: Session token.
+        channels:
+          $ref: '#/components/schemas/AllowedChannels'
+
+    CreateAdminRequest:
+      description: The administrator info.
+      type: object
+      required:
+        - app_id
+        - user_id
+      properties:
+        app_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Uniquely identifies the Fizz application.
+        user_id:
+          $ref: './defs/common/UserId.yaml'
+      
+    RemoveAdminRequest:
+      description: The administrator info.
+      type: object
+      required:
+        - app_id
+        - user_id
+      properties:
+        app_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Uniquely identifies the Fizz application.
+        user_id:
+          $ref: './defs/common/UserId.yaml'
+    
+    AllowedChannels:
+      type: array
+      description: The list of allowed channels in the session. Set to 'null' to allow all channels.
+      minItems: 0
+      maxItems: 8
+      items:
+        $ref: '#/components/schemas/ChannelFilter'
+      example:
+      -  startsWith: "global-"
+      -  matches: "team-spartan"
+
+    ChannelFilter:
+      type: object
+      properties:
+        startsWith:
+          type: string
+          description: Any channel Id which starts with given string
+        matches:
+          type: string
+          description: Channel Id should match with given string
+
+    ApplyAppMuteUserRequest:
+      description: The app mute info.
+      type: object
+      required:
+        - app_id
+        - user_id
+      properties:
+        app_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Uniquely identifies the Fizz application.
+        user_id:
+          $ref: './defs/common/UserId.yaml'
+        duration:
+          type: number
+          format: int32
+          minimum: 1
+          example: 1
+          description: Duration of the mute in seconds.
+
+    RemoveAppMuteUserRequest:
+      description: The app mute info.
+      type: object
+      required:
+        - app_id
+        - user_id
+      properties:
+        app_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Uniquely identifies the Fizz application.
+        user_id:
+          $ref: './defs/common/UserId.yaml'
+        
+        
+
+

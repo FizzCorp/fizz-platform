@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package hbaseClient;
+
+option java_package = "io.fizz.chat.user.infrastructure.persistence";
+option java_outer_classname = "Models";
+
+message PlatformTokens {
+    repeated string token = 1;
+}
+
+message ProfileModel {
+    string appId = 1;
+    string userId = 2;
+    string nick = 3;
+    string statusMessage = 4;
+    string profileUrl = 5;
+    map<string, PlatformTokens> tokens = 6;
+}

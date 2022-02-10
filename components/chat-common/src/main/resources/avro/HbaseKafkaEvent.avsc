@@ -1,0 +1,14 @@
+{
+ "namespace": "io.fizz.chatcommon.infrastructure.messaging.kafka",
+ "type": "record",
+ "name": "HBaseKafkaEvent",
+ "fields": [
+    {"name": "key", "type": "bytes"},
+    {"name": "timestamp",  "type": "long" },
+    {"name": "delete",  "type": "boolean" },
+    {"name": "value", "type": "bytes"},
+    {"name": "qualifier", "type": "bytes"},
+    {"name": "family", "type": "bytes"},
+    {"name": "table", "type": "bytes"}
+ ]
+}

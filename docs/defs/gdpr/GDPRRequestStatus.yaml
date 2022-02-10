@@ -1,0 +1,6 @@
+type: string
+description: GDPR request status.
+enum:
+  - scheduled
+  - cancelled
+  - completed

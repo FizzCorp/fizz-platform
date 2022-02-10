@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package application;
+
+option java_package = "io.fizz.chat.application.impl";
+option java_outer_classname = "Models";
+
+message FCMConfig {
+    string title = 1;
+    string secret = 2;
+}
+
+message Prefs {
+    bool forceCM = 1;
+}
+
+message ProviderConfigModel {
+    enum ProviderType {
+        Azure = 0;
+        CleanSpeak = 1;
+    }
+    ProviderType type = 1;
+    map<string, string> params = 2;
+}

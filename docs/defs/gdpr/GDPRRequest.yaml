@@ -1,0 +1,30 @@
+required:
+  - request_id
+  - user_id
+  - status
+  - requested_by
+  - created
+properties:
+  request_id:
+    type: string
+    description: Uniquely identifies the GDPR request.
+  user_id:
+    type: string
+    description: Id of user in GDPR request.
+  status:
+    $ref: 'GDPRRequestStatus.yaml'
+    description: The status of GDPR request.
+  requested_by:
+    type: string
+    description: The id of user who created the GDPR request.
+  created:
+    type: number
+    format: int64
+    description: Unix timestamp (in milliseconds) of the request's creation time.
+  cancelled_by:
+    type: string
+    description: The id of user who cancelled the GDPR request.
+  updated:
+    type: number
+    format: int64
+    description: Unix timestamp (in milliseconds) of the request's updated time.

@@ -1,0 +1,5 @@
+type: string
+description: The state of the membership of a user in a group.
+enum:
+  - pending
+  - joined

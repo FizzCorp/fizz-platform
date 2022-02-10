@@ -1,0 +1,80 @@
+paths:
+  TranslateText:
+    post:
+      operationId: TranslateText
+      tags:
+        - Translate
+      summary: Translate text into multiple languages.
+      description: Translate text into the specified list of languages.
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              description: Post a messages query to be executed.
+              $ref: '#/components/schemas/TranslateTextRequest'
+      responses:
+        '200':
+          description: The result of the translation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslateTextResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+components:
+  schemas:
+    TranslateTextRequest:
+      type: object
+      required:
+        - to
+        - text
+      properties:
+        from:
+          allOf:
+          - $ref: './defs/common/LanguageCode.yaml'
+          description: It is the locale of field text. If this key is not provided, then system wil auto dedect the locale.
+        to:
+          type: array
+          description: A list of languages to which to translate the text.
+          items:
+            $ref: './defs/common/LanguageCode.yaml'
+        text:
+          type: string
+          description: The text to be translated.
+          maxLength: 1024
+      example:
+        from: "en"
+        to: ["fr", "nl"]
+        text: "hello"
+
+    TranslateTextResponse:
+      type: object
+      properties:
+        translations:
+          type: array
+          items:
+            $ref: "#/components/schemas/TranslatedText"
+
+    TranslatedText:
+      type: object
+      properties:
+        to:
+          description: The target language of the translation.
+          type: string
+        text:
+          description: The translated text.
+          type: string
+  

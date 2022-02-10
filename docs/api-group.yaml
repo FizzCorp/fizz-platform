@@ -1,0 +1,540 @@
+paths:
+  Groups:
+    post:
+      operationId: CreateGroup
+      tags:
+        - Group
+      summary: Create a group
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/CreateGroupRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './defs/Group.yaml'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  Group:
+    post:
+      operationId: UpdateGroup
+      tags:
+        - Group
+      summary: Update a group
+      parameters:
+        - name: groupId
+          description: Uniquely identifies the group.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/UpdateGroupRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+    get:
+      operationId: FetchGroup
+      tags:
+        - Group
+      summary: Fetch a group
+      parameters:
+        - name: groupId
+          description: Uniquely identifies the group.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './defs/Group.yaml'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  GroupMembers:
+    post:
+      operationId: AddGroupMembers
+      tags:
+        - Group
+      summary: Add members to a group
+      parameters:
+        - name: groupId
+          description: Uniquely identifies the group.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/AddGroupMembersRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+    get:
+      operationId: FetchGroupMembers
+      tags:
+        - Group
+      summary: Fetch the members of a group
+      parameters:
+        - name: groupId
+          description: Uniquely identifies the group.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FetchGroupMembersResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  GroupMember:
+    post:
+      operationId: UpdateGroupMember
+      tags:
+        - Group
+      summary: Update a group member
+      parameters:
+        - name: groupId
+          description: Uniquely identifies the group.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: memberId
+          description: Uniquely identifies a group member.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/UpdateGroupMemberRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+    delete:
+      operationId: RemoveGroupMember
+      tags:
+        - Group
+      summary: Remove a group member
+      parameters:
+        - name: groupId
+          description: Uniquely identifies the group.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: memberId
+          description: Uniquely identifies a group member.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  MuteGroupMember:
+    post:
+      operationId: MuteGroupMember
+      tags:
+        - Group
+      summary: Mute a group member
+      description: Muted members can not publish messages in the group.
+      parameters:
+        - name: groupId
+          description: Uniquely identifies the group.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/MuteGroupMemberRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  UnMuteGroupMember:
+    delete:
+      operationId: UnmuteGroupMember
+      tags:
+        - Group
+      summary: Unmute a group member
+      description: After mute removal, members are able to publish messages.
+      parameters:
+        - name: groupId
+          description: Uniquely identifies the group.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: memberId
+          description: Id of the group member that was muted.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  GroupMessages:
+    post:
+      operationId: PublishGroupMessage
+      tags:
+        - Group
+      summary: Publish a message in a group
+      parameters:
+        - name: groupId
+          description: Uniquely identifies the group.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: './defs/ChannelMessageModel.yaml'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+    get:
+      operationId: QueryGroupMessages
+      tags:
+        - Group
+      summary: Query group messages
+      description: Query the messages in the specified group. If both before_id and after_id are not specified then the latest count messages are queried. If both before_id and after_id are specified then before_id takes precedence.
+      parameters:
+        - name: groupId
+          description: Uniquely identifies the group.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: count
+          description: The number of messages to query.
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: before_id
+          description: Fetch count messages before the specified message id.
+          in: query
+          required: false
+          schema:
+            type: number
+            format: int64
+        - name: after_id
+          description: Fetch count messages after the specified message id.
+          in: query
+          required: false
+          schema:
+            type: number
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryGroupMessagesResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+components:
+  schemas:
+    GroupMemberRequest:
+      type: object
+      properties:
+        id:
+          $ref: './defs/common/UserId.yaml'
+        role:
+          $ref: './defs/GroupRoleName.yaml'
+        state:
+          $ref: './defs/GroupMemberState.yaml'
+
+    CreateGroupRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 128
+          description: A human redeable title for the group.
+        image_url:
+          type: string
+          maxLength: 1024
+          description: Group profile image URL.
+        description:
+          type: string
+          maxLength: 1024
+          description: Describes the purpose for the group.
+        type:
+          type: string
+          maxLength: 64
+          description: Specifies the type for the group.
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupMemberRequest'
+
+    UpdateGroupRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 128
+          description: A human redeable title for the group.
+        image_url:
+          type: string
+          maxLength: 1024
+          description: Group profile image URL.
+        description:
+          type: string
+          maxLength: 1024
+          description: Describes the purpose for the group.
+        type:
+          type: string
+          maxLength: 64
+          description: Specifies the type for the group.
+
+    AddGroupMembersRequest:
+      type: array
+      items:
+        $ref: '#/components/schemas/GroupMemberRequest'
+
+    FetchGroupMembersResponse:
+      type: array
+      items:
+        $ref: './defs/GroupMember.yaml'
+
+    UpdateGroupMemberRequest:
+      type: object
+      properties:
+        role:
+          $ref: './defs/GroupRoleName.yaml'
+        last_read_message_id:
+          description: 'Uniquely identifies the last message read by the user.'
+          type: number
+          format: int64
+          minimum: 0
+
+    QueryGroupMessagesResponse:
+      type: array
+      items:
+        $ref: './defs/ChannelMessage.yaml'
+
+    MuteGroupMemberRequest:
+      type: object
+      properties:
+        id:
+          $ref: './defs/common/UserId.yaml'
+        duration:
+          type: number
+          format: int32
+          minimum: 1 
+          example: 1
+          description: Duration of the mute in seconds.
+

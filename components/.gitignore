@@ -1,0 +1,7 @@
+metastore_db/
+src/main/resources/data
+*.iml
+*.idea
+target
+buildspec.yml
+dependency-reduced-pom.xml

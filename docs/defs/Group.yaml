@@ -1,0 +1,36 @@
+required:
+  - id
+  - created_by
+properties:
+  id:
+    type: string
+    description: Uniquely identifies the group.
+  channel_id:
+    type: string
+    description: Uniquely identifies the comminucation channel of the group.
+  created_by:
+    $ref: './common/UserId.yaml'
+  title:
+    type: string
+    maxLength: 128
+    description: A human readable title of the group.
+  image_url:
+    type: string
+    maxLength: 1024
+    description: The url of the profile image to be displayed for the group.
+  description:
+    type: string
+    maxLength: 1024
+    description: A description of the purpose of the group.
+  type:
+    type: string
+    maxLength: 64
+    description: Specifies the type of the group.
+  created:
+    type: number
+    format: int64
+    description: Unix timestamp (in milliseconds) of the groups's creation time.
+  updated:
+    type: number
+    format: int64
+    description: Unix timestamp (in milliseconds) of the last group update.

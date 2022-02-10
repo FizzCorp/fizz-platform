@@ -1,0 +1,652 @@
+paths:
+  ChannelMessages:
+    post:
+      operationId: PublishChannelMessage
+      tags:
+        - Channel
+      summary: Publish message in a channel
+      description: Publish messages to a specific channel.
+      parameters:
+        - name: channelId
+          description: The channel's Id (name).
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              description: Post a messages query to be executed.
+              $ref: './defs/ChannelMessageModel.yaml'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+      
+    get:
+      operationId: QueryChannelMessages
+      tags:
+        - Channel
+      summary: Query channel messages
+      description: Query the messages in a specific channel. If both before_id and after_id are not specified then the latest count messages are queried. If both before_id and after_id are specified then before_id takes precedence.
+      parameters:
+        - name: channelId
+          description: The channel's Id (name).
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: count
+          description: The number of messages to query.
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: before_id
+          description: Fetch count messages before the specified message id.
+          in: query
+          required: false
+          schema:
+            type: number
+            format: int64
+        - name: after_id
+          description: Fetch count messages after the specified message id.
+          in: query
+          required: false
+          schema:
+            type: number
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryChannelMessagesResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  ChannelMessageById:
+    post:
+      operationId: UpdateChannelMessage
+      tags:
+        - Channel
+      summary: Update channel message
+      description: Update an existing message in the channel. Only the original sender can update the message.
+      parameters:
+        - name: channelId
+          description: The channel's Id (name).
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: messageId
+          description: The id of the message that needs to be updated.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              description: Post a messages query to be executed.
+              $ref: './defs/UpdateChannelMessageRequest.yaml'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '409':
+          description: The request conflicts with the current server state, e.g. the message does not exist etc
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+      
+    delete:
+      operationId: DeleteChannelMessage
+      tags:
+        - Channel
+      summary: Delete channel message
+      description: Delete an existing message in the channel. Only the original sender can delete the message.
+      parameters:
+        - name: channelId
+          description: The channel's Id (name).
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: messageId
+          description: The id of the message that needs to be updated.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '409':
+          description: The request conflicts with the current server state, e.g. the message does not exist etc
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  ChannelSubscribers:
+    post:
+      operationId: AddChannelSubscriber
+      tags:
+        - Channel
+      summary: Subscribe to channel
+      description: Subscribe to a specific channel.
+      parameters:
+        - name: channelId
+          description: The channel Id.
+          in: path
+          required: true
+          schema:
+            type: string        
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+      
+    delete:
+      operationId: RemoveChannelSubscriber
+      tags:
+        - Channel
+      summary: Unsubscribe from channel
+      description: Unsubscribe from a specific channel.
+      parameters:
+        - name: channelId
+          description: The channel Id.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  ChannelBans:
+    post:
+      operationId: AddUserBan
+      tags:
+        - Channel
+      summary: Ban a user
+      description: Banned users can not publish or receive messages.
+      parameters:
+        - name: channelId
+          description: The channel Id.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/AddUserBanRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+      
+  ChannelBanById:    
+    delete:
+      operationId: RemoveUserBan
+      tags:
+        - Channel
+      summary: Remove a user's ban
+      description: After ban removal, users are able to publish or receive messages.
+      parameters:
+        - name: channelId
+          description: The channel Id.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: bannedUserId
+          description: Id of the user that was banned.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  ChannelMutes:
+    post:
+      operationId: MuteChannelUser
+      tags:
+        - Channel
+      summary: Mute a channel user
+      description: Muted users can only retreive messages from a channel.
+      parameters:
+        - name: channelId
+          description: The channel Id.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/MuteUserRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  ChannelMuteById:
+    delete:
+      operationId: UnmuteChannelUser
+      tags:
+        - Channel
+      summary: Unmute a channel user
+      description: After mute removal, users are able to publish messages.
+      parameters:
+        - name: channelId
+          description: The channel Id.
+          in: path
+          required: true
+          schema:
+            type: string        
+        - name: mutedUserId
+          description: Id of the user that was muted.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  ChannelTopics:    
+    get:
+      operationId: QueryChannelTopics
+      tags:
+        - Topic
+      summary: Query channel topics
+      description: Query the topics in a specific channel.
+      parameters:
+        - name: channelId
+          description: The channel's Id (name).
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: requesterId
+          description: The id of the user, requesting for channel topics. Only the users with the admin role can request.
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryChannelTopicsResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+  
+  ChannelTopicMessages:
+    post:
+      operationId: PublishChannelTopicMessage
+      tags:
+        - Topic
+      summary: Publish message in a channel topic
+      description: Publish messages to a specific channel.
+      parameters:
+        - name: channelId
+          description: The channel's Id (name).
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: topicId
+          description: |
+            Uniquely identifies a channel's topic. Specifying the channel id here
+            targets the default topic.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              description: Post a messages query to be executed.
+              allOf:
+              - type: object
+                required:
+                  - from
+                properties:
+                  from:
+                    type: string
+                    description: The id of the user on whose behalf message is to be published.
+              - $ref: './defs/ChannelMessageModel.yaml'
+              - type: object
+                properties:
+                  notify:
+                    type: array
+                    description: The message will be published additionally to the list of specified users.
+                    minItems: 0
+                    maxItems: 100
+                    items:
+                      $ref: './defs/common/UserId.yaml'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+    
+    get:
+      operationId: QueryChannelTopicMessages
+      tags:
+        - Topic
+      summary: Query channel topic messages
+      description: Query the messages in a specific topic of a channel. If both before_id and after_id are not specified then the latest count messages are queried. If both before_id and after_id are specified then before_id takes precedence.
+      parameters:
+        - name: channelId
+          description: The channel's Id (name).
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: topicId
+          description: |
+            Uniquely identifies a channel's topic. Specifying the channel id here
+            targets the default topic.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: requesterId
+          description: The id of the user, requesting the messages in the channel topic.
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: count
+          description: The number of messages to query.
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: before_id
+          description: Fetch count messages before the specified message id.
+          in: query
+          required: false
+          schema:
+            type: number
+            format: int64
+        - name: after_id
+          description: Fetch count messages after the specified message id.
+          in: query
+          required: false
+          schema:
+            type: number
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryChannelMessagesResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - digest: []
+
+components:
+  schemas:
+    QueryChannelTopicsResponse:
+      type: array
+      description: List of channel topic ids.
+      items:
+        type: string
+
+    QueryChannelMessagesResponse:
+      type: array
+      items:
+        $ref: './defs/ChannelMessage.yaml'
+
+    AddUserBanRequest:
+      type: object
+      properties:
+        user_id:
+          $ref: './defs/common/UserId.yaml'
+        duration:
+          type: number
+          format: int32
+          minimum: 1 
+          example: 1
+          description: Duration of the ban in seconds.
+
+    MuteUserRequest:
+      type: object
+      properties:
+        user_id:
+          $ref: './defs/common/UserId.yaml'
+        duration:
+          type: number
+          format: int32
+          minimum: 1 
+          example: 1
+          description: Duration of the mute in seconds.
+
+

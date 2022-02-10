@@ -1,0 +1,15 @@
+type: object
+required:
+  - token
+  - now_ts
+properties:
+  token:
+    type: string
+    description: Session token.
+  subscriber_id:
+    type: string
+    description: Uniquely identifies the enitity's subscription.
+  now_ts:
+    type: number
+    format: int64
+    description: Current server time

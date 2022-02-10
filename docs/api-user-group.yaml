@@ -1,0 +1,193 @@
+paths:
+  UserGroups:
+    get:
+      operationId: FetchUserGroups
+      tags:
+        - User
+      summary: Fetch all groups for the specified user.
+      parameters:
+        - name: userId
+          description: Uniquely identifies the user.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          description: Link to the page of items to fetch. Not defined when fetching first page.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page_size
+          description: Number of items to fetch in next call.
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryUserGroupsResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+  UserGroup:
+    post:
+      operationId: UpdateGroup
+      tags:
+        - User
+      summary: Update group state.
+      description: Update the state or last read message of the user in a group.
+      parameters:
+        - name: userId
+          description: Uniquely identifies the user.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: groupId
+          description: Uniquely identifies the group.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:  
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/UpdateUserGroupRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+    delete:
+      operationId: RemoveGroup
+      tags:
+        - User
+      summary: Remove the specified group.
+      description: Removes the specified group from the user's list. If the member state is 'pending', this is equivalent to rejecting an invite. If the member state is 'joined', this is equivalent to leaving the group.
+      parameters:
+        - name: userId
+          description: Uniquely identifies the user.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: groupId
+          description: Uniquely identifies the group.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+        '500':
+          description: The server encountered an unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: './defs/common/ErrorReply.yaml'
+      security:
+      - session_token: []
+
+components:
+  schemas:
+    QueryLinks:
+      type: object
+      properties:
+        next:
+          type: string
+          description: Link to the next page of items. Missing if no next page exists.
+
+    UserGroup:
+      type: object
+      properties:
+        group_id:
+          type: string
+          maxLength: 64
+          description: Uniquely identifies the group.
+        role:
+          $ref: './defs/GroupRoleName.yaml'
+        state:
+          $ref: './defs/GroupMemberState.yaml'
+        last_read_message_id:
+          type: number
+          format: int64
+          minimum: 0
+        created:
+          type: number
+          format: int64
+          description: Unix timestamp (in milliseconds) of the message's creation time.
+
+    UpdateUserGroupRequest:
+      type: object
+      properties:
+        state:
+          allOf:
+            - $ref: './defs/GroupMemberState.yaml'
+          description: Only 'joined' state is acceptable.
+        last_read_message_id:
+          description: 'Uniquely identifies the last message read by the user.'
+          type: number
+          format: int64
+          minimum: 0
+      example:
+        state: 'joined'
+        last_read_message_id: 231
+
+    QueryUserGroupsResponse:
+      type: object
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGroup'
+        links:
+          $ref: '#/components/schemas/QueryLinks'
+

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package hbaseClient;
+
+option java_package = "io.fizz.chat.group.infrastructure.persistence";
+option java_outer_classname = "Models";
+
+message GroupProfileModel {
+    string title = 1;
+    string imageURL = 2;
+    string description = 3;
+    string type = 4;
+    string createdBy = 5;
+}
+
+message GroupMemberModel {
+    string userId = 1;
+    string role = 2;
+    string state = 3;
+    int64 createdOn = 4;
+}
+
+message GroupModel {
+    string appId = 1;
+    string groupId = 2;
+    GroupProfileModel profile = 3;
+    repeated GroupMemberModel members = 4;
+    int64 createdOn = 5;
+    int64 updatedOn = 6;
+}
